@@ -1,29 +1,33 @@
 #!/usr/bin/python3
-"""Module"""
-
+"""
+Using a REST API and an EMP_ID, save info about their TODO list in a csv file
+"""
 import requests
 import sys
 
-if __name__ == '__main__':
-    employee_id = sys.argv[1]
-    user_url = "https://jsonplaceholder.typicode.com/users/{}" \
-        .format(employee_id)
-    todos_url = "https://jsonplaceholder.typicode.com/users/{}/todos/" \
-        .format(employee_id)
 
-    user_info = requests.request('GET', user_url).json()
-    todos_info = requests.request('GET', todos_url).json()
+if __name__ == "__main__":
+    """ main section """
+    EMP_ID = sys.argv[1]
+    BASE_URL = 'https://jsonplaceholder.typicode.com'
+    employee = requests.get(
+        BASE_URL + f'/users/{EMP_ID}/').json()
+    EMPLOYEE_NAME = employee.get("username")
+    employee_todos = requests.get(
+        BASE_URL + f'/users/{EMP_ID}/todos').json()
+    serialized_todos = {}
 
-    employee_name = user_info["name"]
-    employee_username = user_info["username"]
-    task_completed = list(filter(lambda obj:
-                                 (obj["completed"] is True), todos_info))
-    number_of_done_tasks = len(task_completed)
-    total_number_of_tasks = len(todos_info)
+    for todo in employee_todos:
+        serialized_todos.update({todo.get("title"): todo.get("completed")})
 
-    with open(str(employee_id) + '.csv', "w") as file:
-        [file.write('"' + str(employee_id) + '",' +
-                    '"' + employee_username + '",' +
-                    '"' + str(task["completed"]) + '",' +
-                    '"' + task["title"] + '",' + "\n")
-         for task in todos_info]
+    COMPLETED_LEN = len([k for k, v in serialized_todos.items() if v is True])
+    with open(str(EMP_ID) + '.csv', "w") as f:
+        [
+            f.write(
+                '"' + str(sys.argv[1]) + '",' +
+                '"' + EMPLOYEE_NAME + '",' +
+                '"' + str(todo["completed"]) + '",' +
+                '"' + todo["title"] + '",' + "\n"
+            )
+            for todo in employee_todos
+        ]
